@@ -1,20 +1,28 @@
+//! Helpers for transforming with non-consuming functions.
+
 use core::ops::{DerefMut, Deref};
 
-/// A trait providing convenience methods for transforming with non-consuming functions.
+/// Convenience methods for transforming with non-consuming functions.
 pub trait IterRef: Sized + Iterator {
     /// Map with a closure that takes its argument by ref.
+    ///
+    /// This is useful for mapping unary `&self` methods over an iterator of values.
     fn map_ref<B, F>(self, func: F) -> MapRef<Self, F>
     where F: FnMut(&Self::Item) -> B {
         MapRef { iter: self, func }
     }
 
     /// Map with a closure that takes its argument by mut ref.
+    ///
+    /// This is useful for mapping unary `&mut self` methods over an iterator of values.
     fn map_ref_mut<B, F>(self, func: F) -> MapMut<Self, F>
     where F: FnMut(&mut Self::Item) -> B {
         MapMut { iter: self, func }
     }
 
     /// Map with a closure that takes the `Item`'s `Deref::Target` by ref.
+    ///
+    /// This is useful for mapping unary `Deref::Target` `&self` methods over an iterator of values.
     fn map_deref<B, F>(self, func: F) -> MapDeref<Self, F>
     where
         Self::Item: Deref,
@@ -24,6 +32,8 @@ pub trait IterRef: Sized + Iterator {
     }
 
     /// Map with a closure that takes the `Item`'s `Deref::Target` by mut ref.
+    ///
+    /// This is useful for mapping unary `Deref::Target` `&mut self` methods over an iterator of values.
     fn map_deref_mut<B, F>(self, func: F) -> MapDerefMut<Self, F>
     where
         Self::Item: DerefMut,

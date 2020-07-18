@@ -1,4 +1,20 @@
+//! Helpers for free functions.
+
 /// A predicate modifier that inverts the result of the wrapped predicate.
+///
+/// # Examples
+///
+/// ```
+/// #![feature(array_value_iter)]
+/// use std::array::IntoIter;
+/// use funcy::{Not, IterMove};
+///
+/// let non_empty = IntoIter::new(["hello", "", "world", "", ""])
+///     .filter_move(Not(str::is_empty))
+///     .collect::<Vec<_>>();
+///
+/// assert_eq!(vec!["hello", "world"], non_empty);
+/// ```
 #[derive(Clone, Copy, Debug)]
 pub struct Not<P>(pub P);
 
@@ -27,7 +43,10 @@ where P: Fn(T) -> bool {
 #[cfg(test)]
 mod test {
     use super::Not;
-    use std::collections::HashSet;
+    use std::{
+        collections::HashSet,
+        array::IntoIter as ArrayIter,
+    };
 
     #[test]
     fn not_fn() {
@@ -51,7 +70,7 @@ mod test {
         let mut seen = HashSet::new();
         let unique = |&val: &i32| seen.insert(val);
 
-        let first_repeat = vec![1, 2, 3, 4, 2, 6].into_iter().find(Not(unique));
+        let first_repeat = ArrayIter::new([1, 2, 3, 4, 2, 6]).find(Not(unique));
 
         assert_eq!(Some(2), first_repeat);
     }

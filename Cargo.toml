@@ -1,11 +1,10 @@
 [package]
+description = "Fancy helpers for functional programming"
 name = "funcy"
-version = "0.1.0"
-authors = ["Andrew Tolvstad <tolvstaa@lifetime.oregonstate.edu>"]
+version = "0.0.1"
+authors = ["Inityx"]
+license = "LGPL-2.1-or-later"
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+repository = "https://github.com/Inityx/funcy"
 
 [dependencies]
-
-[dev-dependencies]

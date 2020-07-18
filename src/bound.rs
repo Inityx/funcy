@@ -1,6 +1,12 @@
+//! Helpers for methods.
+
 use core::ops::{Deref, DerefMut};
 
+/// Glue for using arbitary functions/closures as if they were methods.
+///
+/// This trait supports unary functions, and supports passing the receiver by move, `&(mut)`, and `Deref`(`Mut`).
 pub trait Dot {
+    /// Call the provided function as a `self` method.
     fn dot<B, F>(self, func: F) -> B
     where
         Self: Sized,
@@ -9,16 +15,19 @@ pub trait Dot {
         func(self)
     }
 
+    /// Call the provided function as a `&self` method.
     fn dot_ref<B, F>(&self, func: F) -> B
     where F: FnOnce(&Self) -> B {
         func(self)
     }
 
+    /// Call the provided function as a `&mut self` method.
     fn dot_mut<B, F>(&mut self, func: F) -> B
     where F: FnOnce(&mut Self) -> B {
         func(self)
     }
 
+    /// Call the provided function as a `&self` method on the receiver's `Deref` target.
     fn dot_deref<B, F>(&mut self, func: F) -> B
     where
         Self: Deref,
@@ -27,6 +36,7 @@ pub trait Dot {
         func(self.deref())
     }
 
+    /// Call the provided function as a `&mut self` method on the receiver's `DerefMut` target.
     fn dot_deref_mut<B, F>(&mut self, func: F) -> B
     where
         Self: DerefMut,
@@ -38,6 +48,32 @@ pub trait Dot {
 
 impl<T> Dot for T {}
 
+/// Reference an inherent or trait method, with a receiver pre-bound.
+///
+/// # Examples
+///
+/// Binding variables:
+///
+/// ```
+/// use funcy::bind;
+///
+/// let mut v = Vec::new();
+/// (1..=3).for_each(bind!(v::push));
+/// assert_eq!(vec![1, 2, 3], v);
+/// ```
+///
+/// Binding expressions:
+///
+/// ```
+/// use std::ops::Mul;
+/// use funcy::bind;
+///
+/// let doubled = (1..=3)
+///     .map(bind!({1 + 1}::mul))
+///     .collect::<Vec<_>>();
+///
+/// assert_eq!(vec![2, 4, 6], doubled);
+/// ```
 #[macro_export]
 macro_rules! bind {
     ($receiver:ident::$method:ident) => { |x| $receiver.$method(x) };

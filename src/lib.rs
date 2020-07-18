@@ -1,5 +1,11 @@
-#![feature(fn_traits, unboxed_closures)]
 #![cfg_attr(not(test), no_std)]
+#![feature(
+    fn_traits,
+    unboxed_closures,
+    array_value_iter,
+)]
+
+//! Fancy helpers for functional programming.
 
 pub mod iter_ref;
 pub mod iter_move;

@@ -1,4 +1,6 @@
-/// A trait providing convenience methods for predicating on consuming functions.
+//! Helpers for predicating on consuming functions.
+
+/// Convenience methods for predicating on consuming functions.
 pub trait IterMove: Iterator {
     /// Filter with a consuming predicate.
     ///
@@ -81,24 +83,24 @@ where
 {
     type Item = I::Item;
     fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            match self.iter.next() {
-                Some(item) if (self.pred)(item.clone()) => break Some(item),
-                None => break None,
-                _ => {}
+        while let Some(item) = self.iter.next() {
+            if (self.pred)(item.clone()) {
+                return Some(item);
             }
         }
+
+        None
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::array::IntoIter as ArrayIter;
 
     #[test]
     fn filter_move() {
-        let negatives = vec![-1, -2, 3, -4, 5, -6]
-            .into_iter()
+        let negatives = ArrayIter::new([-1, -2, 3, -4, 5, -6])
             .filter_move(i32::is_negative)
             .collect::<Vec<_>>();
 
@@ -107,8 +109,7 @@ mod test {
 
     #[test]
     fn find_move() {
-        let first_positive = vec![-1, -2, 3, -4, 5, -6]
-            .into_iter()
+        let first_positive = ArrayIter::new([-1, -2, 3, -4, 5, -6])
             .find_move(i32::is_positive);
 
         assert_eq!(Some(3), first_positive);
@@ -116,20 +117,19 @@ mod test {
 
     #[test]
     fn any_move() {
-        assert!( vec![-1, -2, 3, -4, 5, -6].into_iter().any_move(i32::is_negative));
-        assert!(!vec![ 1,  2, 3,  4, 5,  6].into_iter().any_move(i32::is_negative));
+        assert!( ArrayIter::new([-1, -2, 3, -4, 5, -6]).any_move(i32::is_negative));
+        assert!(!ArrayIter::new([ 1,  2, 3,  4, 5,  6]).any_move(i32::is_negative));
     }
 
     #[test]
     fn all_move() {
-        assert!(!vec![-1, -2, 3, -4, 5, -6].into_iter().all_move(i32::is_positive));
-        assert!( vec![ 1,  2, 3,  4, 5,  6].into_iter().all_move(i32::is_positive));
+        assert!(!ArrayIter::new([-1, -2, 3, -4, 5, -6]).all_move(i32::is_positive));
+        assert!( ArrayIter::new([ 1,  2, 3,  4, 5,  6]).all_move(i32::is_positive));
     }
 
     #[test]
     fn position_move() {
-        let first_positive = vec![-1, -2, 3, -4, 5, -6]
-            .into_iter()
+        let first_positive = ArrayIter::new([-1, -2, 3, -4, 5, -6])
             .position_move(i32::is_positive);
 
         assert_eq!(Some(2), first_positive);
@@ -137,8 +137,7 @@ mod test {
 
     #[test]
     fn rposition_move() {
-        let last_positive = vec![-1, -2, 3, -4, 5, -6]
-            .into_iter()
+        let last_positive = ArrayIter::new([-1, -2, 3, -4, 5, -6])
             .rposition_move(i32::is_positive);
 
         assert_eq!(Some(4), last_positive);
