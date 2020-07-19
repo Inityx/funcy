@@ -1,29 +1,32 @@
 //! Helpers for transforming with non-consuming functions.
+//!
+//! The primary functionality of this module comes from the trait [`IterRef`].
 
 use core::ops::{DerefMut, Deref};
 
 /// Convenience methods for transforming with non-consuming functions.
 pub trait IterRef: Sized + Iterator {
-    /// Map with a closure that takes its argument by ref.
+    /// `map` by ref.
     ///
-    /// This is useful for mapping unary `&self` methods over an iterator of values.
-    fn map_ref<B, F>(self, func: F) -> MapRef<Self, F>
+    /// Useful for mapping unary `&self` methods over an iterator of values.
+    fn map_r<B, F>(self, func: F) -> MapRef<Self, F>
     where F: FnMut(&Self::Item) -> B {
         MapRef { iter: self, func }
     }
 
-    /// Map with a closure that takes its argument by mut ref.
+    /// `map` by ref mut.
     ///
-    /// This is useful for mapping unary `&mut self` methods over an iterator of values.
-    fn map_ref_mut<B, F>(self, func: F) -> MapMut<Self, F>
+    /// Useful for mapping unary `&mut self` methods over an iterator of values.
+    fn map_r_m<B, F>(self, func: F) -> MapMut<Self, F>
     where F: FnMut(&mut Self::Item) -> B {
         MapMut { iter: self, func }
     }
 
-    /// Map with a closure that takes the `Item`'s `Deref::Target` by ref.
+    /// `map` by `Deref`.
     ///
-    /// This is useful for mapping unary `Deref::Target` `&self` methods over an iterator of values.
-    fn map_deref<B, F>(self, func: F) -> MapDeref<Self, F>
+    /// Useful for mapping unary `Deref::Target`s' `&self` methods over an
+    /// iterator of values.
+    fn map_d<B, F>(self, func: F) -> MapDeref<Self, F>
     where
         Self::Item: Deref,
         F: FnMut(&<Self::Item as Deref>::Target) -> B,
@@ -31,10 +34,11 @@ pub trait IterRef: Sized + Iterator {
         MapDeref { iter: self, func }
     }
 
-    /// Map with a closure that takes the `Item`'s `Deref::Target` by mut ref.
+    /// `map` by `DerefMut`.
     ///
-    /// This is useful for mapping unary `Deref::Target` `&mut self` methods over an iterator of values.
-    fn map_deref_mut<B, F>(self, func: F) -> MapDerefMut<Self, F>
+    /// This is useful for mapping unary `Deref::Target`s' `&mut self` methods
+    /// over an iterator of values.
+    fn map_d_m<B, F>(self, func: F) -> MapDerefMut<Self, F>
     where
         Self::Item: DerefMut,
         F: FnMut(&mut <Self::Item as Deref>::Target) -> B,
@@ -45,12 +49,9 @@ pub trait IterRef: Sized + Iterator {
 
 impl<T: Iterator> IterRef for T {}
 
-/// An iterator that maps the values of `iter` with `func`, taken by reference.
+/// An iterator mapping `func(&Item)`.
 ///
-/// This `struct` is created by the [`map_ref`] method on [`IterRef`].
-///
-/// [`map_ref`]: trait.IterRef.html#method.map_ref
-/// [`IterRef`]: trait.IterRef.html
+/// This `struct` is created by [`IterRef::map_r`].
 #[derive(Clone, Copy, Debug)]
 pub struct MapRef<I, F> {
     iter: I,
@@ -65,12 +66,9 @@ where F: FnMut(&I::Item) -> B {
     }
 }
 
-/// An iterator that maps the values of `iter` with `func`, taken by mutable reference.
+/// An iterator mapping `func(&mut Item)`.
 ///
-/// This `struct` is created by the [`map_ref_mut`] method on [`IterRef`].
-///
-/// [`map_ref_mut`]: trait.IterRef.html#method.map_mut
-/// [`IterRef`]: trait.IterRef.html
+/// This `struct` is created by [`IterRef::map_r_m`].
 #[derive(Clone, Copy, Debug)]
 pub struct MapMut<I, F> {
     iter: I,
@@ -85,12 +83,10 @@ where F: FnMut(&mut I::Item) -> B {
     }
 }
 
-/// An iterator that maps the values of `iter` with `func`, taken via [`Deref`].
+/// An iterator mapping `func(&<Item as Deref>::Target)`.
 ///
-/// This `struct` is created by the [`map_deref`] method on [`IterRef`].
+/// This `struct` is created by [`IterRef::map_d`].
 ///
-/// [`map_deref`]: trait.IterRef.html#method.map_deref
-/// [`IterRef`]: trait.IterRef.html
 #[derive(Clone, Copy, Debug)]
 pub struct MapDeref<I, F> {
     iter: I,
@@ -108,12 +104,9 @@ where
     }
 }
 
-/// An iterator that maps the values of `iter` with `func`, taken via [`DerefMut`].
+/// An iterator mapping `func(&mut <Item as Deref>::Target)`.
 ///
-/// This `struct` is created by the [`map_deref_mut`] method on [`IterRef`].
-///
-/// [`map_deref_mut`]: trait.IterRef.html#method.map_deref_mut
-/// [`IterRef`]: trait.IterRef.html
+/// This `struct` is created by [`IterRef::map_d_m`].
 #[derive(Clone, Copy, Debug)]
 pub struct MapDerefMut<I, F> {
     iter: I,
@@ -152,7 +145,7 @@ mod test {
         assert_eq!(
             5,
             once(IntWrapper(5))
-                .map_ref(IntWrapper::get)
+                .map_r(IntWrapper::get)
                 .next().unwrap(),
         );
     }
@@ -162,7 +155,7 @@ mod test {
         assert_eq!(
             2,
             once(IntWrapper(5))
-                .map_ref_mut(IntWrapper::pop_half)
+                .map_r_m(IntWrapper::pop_half)
                 .next()
                 .unwrap(),
         );
@@ -173,7 +166,7 @@ mod test {
         assert_eq!(
             5,
             once(Box::new(IntWrapper(5)))
-                .map_deref(IntWrapper::get)
+                .map_d(IntWrapper::get)
                 .next().unwrap(),
         );
     }
@@ -183,7 +176,7 @@ mod test {
         assert_eq!(
             2,
             once(Box::new(IntWrapper(5)))
-                .map_deref_mut(IntWrapper::pop_half)
+                .map_d_m(IntWrapper::pop_half)
                 .next().unwrap(),
         );
     }

@@ -1,11 +1,15 @@
 //! Helpers for predicating on consuming functions.
+//!
+//! The primary functionality of this module comes from the trait [`IterMove`].
 
-/// Convenience methods for predicating on consuming functions.
+/// Convenience methods on [`Iterator`](core::iter::Iterator) for predicating on
+/// consuming functions.
 pub trait IterMove: Iterator {
-    /// Filter with a consuming predicate.
+    /// `filter` by move.
     ///
-    /// The created iterator clones each item in order to test it.
-    fn filter_move<P>(self, pred: P) -> FilterMove<Self, P>
+    /// Filter with a consuming predicate. The created iterator clones each item
+    /// in order to test it.
+    fn filter_m<P>(self, pred: P) -> FilterMove<Self, P>
     where
         Self: Sized,
         Self::Item: Clone,
@@ -14,10 +18,11 @@ pub trait IterMove: Iterator {
         FilterMove { iter: self, pred }
     }
 
-    /// Searches for an element that satisfies a consuming predicate.
+    /// `find` by move.
     ///
-    /// The created iterator clones each item in order to test it.
-    fn find_move<P>(&mut self, mut pred: P) -> Option<Self::Item>
+    /// Search for an element with a consuming predicate. The created
+    /// iterator clones each item in order to test it.
+    fn find_m<P>(&mut self, mut pred: P) -> Option<Self::Item>
     where
         Self::Item: Clone,
         P: FnMut(Self::Item) -> bool,
@@ -26,22 +31,28 @@ pub trait IterMove: Iterator {
         None
     }
 
-    /// Tests if any element matches a consuming predicate.
-    fn any_move<P>(&mut self, mut pred: P) -> bool
+    /// `any` by move.
+    ///
+    /// Test if any element matches a consuming predicate.
+    fn any_m<P>(&mut self, mut pred: P) -> bool
     where P: FnMut(Self::Item) -> bool {
         for item in self { if pred(item) { return true; } }
         false
     }
 
-    /// Tests if every element matches a consuming predicate.
-    fn all_move<P>(&mut self, mut pred: P) -> bool
+    /// `all` by move.
+    ///
+    /// Test if every element matches a consuming predicate.
+    fn all_m<P>(&mut self, mut pred: P) -> bool
     where P: FnMut(Self::Item) -> bool {
         for item in self { if !pred(item) { return false; } }
         true
     }
 
-    /// Searches for an element in an iterator, returning its index.
-    fn position_move<P>(&mut self, mut pred: P) -> Option<usize>
+    /// `position` by move.
+    ///
+    /// Search for an element with a consuming predicate, returning its index.
+    fn position_m<P>(&mut self, mut pred: P) -> Option<usize>
     where P: FnMut(Self::Item) -> bool {
         self.enumerate().filter_map(|(i, item)|
             if pred(item) { Some(i) }
@@ -49,8 +60,11 @@ pub trait IterMove: Iterator {
         ).next()
     }
 
-    /// Searches backwards for an element in an iterator, returning its index.
-    fn rposition_move<P>(&mut self, mut pred: P) -> Option<usize>
+    /// `rposition` by move.
+    ///
+    /// Search backwards for an element with a consuming predicate, returning
+    /// its index.
+    fn rposition_m<P>(&mut self, mut pred: P) -> Option<usize>
     where
         Self: ExactSizeIterator + DoubleEndedIterator,
         P: FnMut(Self::Item) -> bool,
@@ -64,12 +78,9 @@ pub trait IterMove: Iterator {
 
 impl<T: Iterator> IterMove for T {}
 
-/// An iterator that filters the values of `iter` with `pred`, taken by value.
+/// An iterator filtering with `pred(Item)`.
 ///
-/// This `struct` is created by the [`filter_move`] method on [`IterMove`].
-///
-/// [`filter_move`]: trait.IterMove.html#method.filter_move
-/// [`IterMove`]: trait.IterMove.html
+/// This `struct` is created by [`IterMove::filter_m`].
 #[derive(Clone, Copy, Debug)]
 pub struct FilterMove<I, P> {
     iter: I,
@@ -96,12 +107,12 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::array::IntoIter as ArrayIter;
+    use std::array::IntoIter;
 
     #[test]
     fn filter_move() {
-        let negatives = ArrayIter::new([-1, -2, 3, -4, 5, -6])
-            .filter_move(i32::is_negative)
+        let negatives = IntoIter::new([-1, -2, 3, -4, 5, -6])
+            .filter_m(i32::is_negative)
             .collect::<Vec<_>>();
 
         assert_eq!(vec![-1, -2, -4, -6], negatives);
@@ -109,36 +120,36 @@ mod test {
 
     #[test]
     fn find_move() {
-        let first_positive = ArrayIter::new([-1, -2, 3, -4, 5, -6])
-            .find_move(i32::is_positive);
+        let first_positive = IntoIter::new([-1, -2, 3, -4, 5, -6])
+            .find_m(i32::is_positive);
 
         assert_eq!(Some(3), first_positive);
     }
 
     #[test]
     fn any_move() {
-        assert!( ArrayIter::new([-1, -2, 3, -4, 5, -6]).any_move(i32::is_negative));
-        assert!(!ArrayIter::new([ 1,  2, 3,  4, 5,  6]).any_move(i32::is_negative));
+        assert!( IntoIter::new([-1, -2, 3, -4, 5, -6]).any_m(i32::is_negative));
+        assert!(!IntoIter::new([ 1,  2, 3,  4, 5,  6]).any_m(i32::is_negative));
     }
 
     #[test]
     fn all_move() {
-        assert!(!ArrayIter::new([-1, -2, 3, -4, 5, -6]).all_move(i32::is_positive));
-        assert!( ArrayIter::new([ 1,  2, 3,  4, 5,  6]).all_move(i32::is_positive));
+        assert!(!IntoIter::new([-1, -2, 3, -4, 5, -6]).all_m(i32::is_positive));
+        assert!( IntoIter::new([ 1,  2, 3,  4, 5,  6]).all_m(i32::is_positive));
     }
 
     #[test]
     fn position_move() {
-        let first_positive = ArrayIter::new([-1, -2, 3, -4, 5, -6])
-            .position_move(i32::is_positive);
+        let first_positive = IntoIter::new([-1, -2, 3, -4, 5, -6])
+            .position_m(i32::is_positive);
 
         assert_eq!(Some(2), first_positive);
     }
 
     #[test]
     fn rposition_move() {
-        let last_positive = ArrayIter::new([-1, -2, 3, -4, 5, -6])
-            .rposition_move(i32::is_positive);
+        let last_positive = IntoIter::new([-1, -2, 3, -4, 5, -6])
+            .rposition_m(i32::is_positive);
 
         assert_eq!(Some(4), last_positive);
     }
