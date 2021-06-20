@@ -1,5 +1,5 @@
 [package]
-description = "Fancy helpers for functional programming"
+description = "Function transformations for functional programming"
 name = "funcy"
 version = "0.0.1"
 authors = ["Inityx"]

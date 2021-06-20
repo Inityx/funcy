@@ -6,18 +6,18 @@ use core::ops::{DerefMut, Deref};
 
 /// Convenience methods for transforming with non-consuming functions.
 pub trait IterRef: Sized + Iterator {
-    /// `map` by ref.
+    /// `map` by reference.
     ///
     /// Useful for mapping unary `&self` methods over an iterator of values.
-    fn map_r<B, F>(self, func: F) -> MapRef<Self, F>
+    fn map_ref<B, F>(self, func: F) -> MapRef<Self, F>
     where F: FnMut(&Self::Item) -> B {
         MapRef { iter: self, func }
     }
 
-    /// `map` by ref mut.
+    /// `map` by mutable reference.
     ///
     /// Useful for mapping unary `&mut self` methods over an iterator of values.
-    fn map_r_m<B, F>(self, func: F) -> MapMut<Self, F>
+    fn map_refmut<B, F>(self, func: F) -> MapMut<Self, F>
     where F: FnMut(&mut Self::Item) -> B {
         MapMut { iter: self, func }
     }
@@ -26,7 +26,7 @@ pub trait IterRef: Sized + Iterator {
     ///
     /// Useful for mapping unary `Deref::Target`s' `&self` methods over an
     /// iterator of values.
-    fn map_d<B, F>(self, func: F) -> MapDeref<Self, F>
+    fn map_deref<B, F>(self, func: F) -> MapDeref<Self, F>
     where
         Self::Item: Deref,
         F: FnMut(&<Self::Item as Deref>::Target) -> B,
@@ -38,7 +38,7 @@ pub trait IterRef: Sized + Iterator {
     ///
     /// This is useful for mapping unary `Deref::Target`s' `&mut self` methods
     /// over an iterator of values.
-    fn map_d_m<B, F>(self, func: F) -> MapDerefMut<Self, F>
+    fn map_derefmut<B, F>(self, func: F) -> MapDerefMut<Self, F>
     where
         Self::Item: DerefMut,
         F: FnMut(&mut <Self::Item as Deref>::Target) -> B,
@@ -51,7 +51,7 @@ impl<T: Iterator> IterRef for T {}
 
 /// An iterator mapping `func(&Item)`.
 ///
-/// This `struct` is created by [`IterRef::map_r`].
+/// This `struct` is created by [`IterRef::map_ref`].
 #[derive(Clone, Copy, Debug)]
 pub struct MapRef<I, F> {
     iter: I,
@@ -68,7 +68,7 @@ where F: FnMut(&I::Item) -> B {
 
 /// An iterator mapping `func(&mut Item)`.
 ///
-/// This `struct` is created by [`IterRef::map_r_m`].
+/// This `struct` is created by [`IterRef::map_refmut`].
 #[derive(Clone, Copy, Debug)]
 pub struct MapMut<I, F> {
     iter: I,
@@ -85,7 +85,7 @@ where F: FnMut(&mut I::Item) -> B {
 
 /// An iterator mapping `func(&<Item as Deref>::Target)`.
 ///
-/// This `struct` is created by [`IterRef::map_d`].
+/// This `struct` is created by [`IterRef::map_deref`].
 ///
 #[derive(Clone, Copy, Debug)]
 pub struct MapDeref<I, F> {
@@ -106,7 +106,7 @@ where
 
 /// An iterator mapping `func(&mut <Item as Deref>::Target)`.
 ///
-/// This `struct` is created by [`IterRef::map_d_m`].
+/// This `struct` is created by [`IterRef::map_derefmut`].
 #[derive(Clone, Copy, Debug)]
 pub struct MapDerefMut<I, F> {
     iter: I,
@@ -145,17 +145,17 @@ mod test {
         assert_eq!(
             5,
             once(IntWrapper(5))
-                .map_r(IntWrapper::get)
+                .map_ref(IntWrapper::get)
                 .next().unwrap(),
         );
     }
 
     #[test]
-    fn map_mut() {
+    fn map_refmut() {
         assert_eq!(
             2,
             once(IntWrapper(5))
-                .map_r_m(IntWrapper::pop_half)
+                .map_refmut(IntWrapper::pop_half)
                 .next()
                 .unwrap(),
         );
@@ -166,17 +166,17 @@ mod test {
         assert_eq!(
             5,
             once(Box::new(IntWrapper(5)))
-                .map_d(IntWrapper::get)
+                .map_deref(IntWrapper::get)
                 .next().unwrap(),
         );
     }
 
     #[test]
-    fn map_deref_mut() {
+    fn map_derefmut() {
         assert_eq!(
             2,
             once(Box::new(IntWrapper(5)))
-                .map_d_m(IntWrapper::pop_half)
+                .map_derefmut(IntWrapper::pop_half)
                 .next().unwrap(),
         );
     }

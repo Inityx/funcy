@@ -1,4 +1,4 @@
-//! Helpers for free functions.
+//! Helpers for transforming functions.
 
 /// A predicate modifier that inverts the result.
 ///
@@ -15,7 +15,7 @@
 /// use funcy::{Not, IterMove};
 ///
 /// let non_empty: Vec<_> = IntoIter::new(["hello", "", "world", "", ""])
-///     .filter_m(Not(str::is_empty))
+///     .filter_move(Not(str::is_empty))
 ///     .collect();
 ///
 /// assert_eq!(vec!["hello", "world"], non_empty);
